@@ -49,13 +49,19 @@
 .content {
   width: 900px;
   max-width: 100%;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   flex-direction: column;
-  padding: 10vh 96px;
+  padding: 10vh 0;
 }
 
 .line {
+  width: 100%;
+  padding: 0 96px;
+}
+
+.editor {
   flex-shrink: 0;
   position: relative;
   outline: none;
@@ -69,8 +75,8 @@
   color: rgb(55, 53, 47);
 }
 
-.line:hover:before, .line:focus:before {
-  content: attr(index);
+.editor:hover:before, .editor:focus:before {
+  content: '+';
   display: block;
   -webkit-text-fill-color: rgba(55, 53, 47, 0.4);
   right: calc(100% + 10px);
@@ -79,8 +85,13 @@
   width: 40px;
 }
 
-.line:focus:empty:after {
+.editor:focus:empty:after {
   content: attr(placeholder);
   display: block;
   -webkit-text-fill-color: rgba(55, 53, 47, 0.4);
+}
+
+.editor.h1 {
+  font-size: 28px;
+  font-weight: bold;
 }
