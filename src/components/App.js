@@ -10,30 +10,19 @@ import {
   filteredMenuItems,
 } from '../state'
 import { useReducerWithMiddleware } from '../hooks'
-import ioClient from 'socket.io-client'
+import { logger, socket } from '../middlewares'
 
 const KEYUP = 38
 const KEYDOWN = 40
 const ENTER = 13
 const BACKSPACE = 8
 
-const logger = ({ getState }) => next => action => {
-  const prevState = getState()
-  const returned = next(action)
-  const nextState = getState()
-  console.log('prevState:', prevState)
-  console.log('action:', action)
-  console.log('nextState:', nextState)
-  return returned
-}
-
-const socket = actionTypes => () => next => {
-  const socket = ioClient('http://localhost:3001')
-  socket.on('action', action => next({ ...action, isMe: false }))
-  return action => {
-    if (actionTypes.includes(action.type)) socket.emit('action', action)
-    return next({ ...action, isMe: true })
-  }
+const placeholderByType = {
+  h1: 'Untitled',
+  h2: 'Heading 2',
+  h3: 'Heading 3',
+  h4: 'Heading 4',
+  p: "Type '/' for commands",
 }
 
 function App() {
@@ -155,9 +144,7 @@ function App() {
               <ContentEditable
                 setInputRef={el => (lineElRefs.current[index] = el)}
                 index={index}
-                placeholder={
-                  type === 'h1' ? 'Heading 1' : "Type '/' for commands"
-                }
+                placeholder={placeholderByType[type]}
                 className={type}
                 html={content}
                 onChange={e => onChange(index, e.target.value)}

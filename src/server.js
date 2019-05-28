@@ -7,9 +7,17 @@ const server = http.createServer((req, res) => {
 
 const io = Io(server)
 
+let lines = [{ type: 'h1', content: '' }]
+
 io.on('connection', socket => {
+  socket.emit('action', { type: 'INIT_STATE', lines })
+
   socket.on('action', action => {
     socket.broadcast.emit('action', action)
+  })
+
+  socket.on('updateState', _lines => {
+    lines = _lines
   })
 })
 

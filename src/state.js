@@ -11,6 +11,7 @@ export const initialState = {
 }
 
 export const types = {
+  INIT_STATE: 'INIT_STATE',
   FOCUS: 'FOCUS',
   FOCUS_UP: 'FOCUS_UP',
   FOCUS_DOWN: 'FOCUS_DOWN',
@@ -41,6 +42,10 @@ export const menuItems = [
     name: 'Heading 3',
     type: 'h3',
   },
+  {
+    name: 'Heading 4',
+    type: 'h4',
+  },
 ]
 
 export const maxIndex = state => state.lines.length - 1
@@ -58,6 +63,12 @@ export const getSelectedTextType = state => {
 
 export const reducer = (state, action) => {
   switch (action.type) {
+    case types.INIT_STATE:
+      return {
+        ...state,
+        lines: action.lines,
+      }
+
     case types.FOCUS_UP:
       return {
         ...state,

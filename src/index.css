@@ -101,20 +101,25 @@ code {
 .editor:focus:empty:after {
   content: attr(placeholder);
   display: block;
-  -webkit-text-fill-color: rgba(55, 53, 47, 0.4);
+  -webkit-text-fill-color: rgba(55, 53, 47, 0.3);
 }
 
 .editor.h1 {
-  font-size: 28px;
+  font-size: 42px;
   font-weight: bold;
 }
 
 .editor.h2 {
-  font-size: 21px;
+  font-size: 28px;
   font-weight: bold;
 }
 
 .editor.h3 {
+  font-size: 21px;
+  font-weight: bold;
+}
+
+.editor.h4 {
   font-size: 16px;
   font-weight: bold;
 }
