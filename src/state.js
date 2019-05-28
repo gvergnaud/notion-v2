@@ -114,7 +114,13 @@ export const reducer = (state, action) => {
         ...state,
         lines: setAtIndex(
           selectors.getIdIndex(action.id, state),
-          line => ({ ...line, content: action.content }),
+          line => ({
+            ...line,
+            content: action.content
+              .replace('-&gt;', '→')
+              .replace('&lt;3', '❤️')
+              .replace(':)', '🙂'),
+          }),
           state.lines,
         ),
       }

@@ -5,12 +5,15 @@ export const useReducerWithMiddleware = (
   initialState,
   middlewares = [],
 ) => {
-  const [state, localDispatch] = React.useReducer(reducer, initialState)
-
+  const [state, setState] = React.useState(initialState)
   const stateRef = React.useRef(state)
-  React.useEffect(() => {
-    stateRef.current = state
-  }, [state])
+
+  const localDispatch = action =>
+    setState(state => {
+      const newState = reducer(state, action)
+      stateRef.current = newState
+      return newState
+    })
 
   const dispatch = React.useMemo(() => {
     let dispatch = () => {
@@ -26,7 +29,7 @@ export const useReducerWithMiddleware = (
 
     dispatch = middlewares
       .map(middleware => middleware(middlewareAPI))
-      .reduce((acc, middleware) => middleware(acc), localDispatch)
+      .reduceRight((acc, middleware) => middleware(acc), localDispatch)
 
     return dispatch
     // eslint-disable-next-line react-hooks/exhaustive-deps

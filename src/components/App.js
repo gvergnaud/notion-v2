@@ -20,13 +20,13 @@ const placeholderByType = {
 
 function App() {
   const [state, dispatch] = useReducerWithMiddleware(reducer, initialState, [
-    logger,
     socket([
       types.NEW_LINE,
       types.REMOVE_LINE,
       types.UPDATE_CONTENT,
       types.SET_TEXT_TYPE,
     ]),
+    logger,
   ])
   const stateRef = React.useRef(state)
   const elsByIdRef = React.useRef({})
@@ -102,6 +102,7 @@ function App() {
       top: top + height,
       left,
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elsByIdRef.current, state.focusId, state.menu.isOpen])
 
   return (
