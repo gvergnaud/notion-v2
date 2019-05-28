@@ -1,4 +1,3 @@
-import { throttle } from 'lodash'
 import ioClient from 'socket.io-client'
 
 export const logger = ({ getState }) => next => action => {
@@ -16,9 +15,9 @@ export const socket = actionTypes => ({ getState }) => next => {
 
   socket.on('action', action => next({ ...action, isMe: false }))
 
-  const updateState = throttle(lines => {
+  const updateState = lines => {
     socket.emit('updateState', lines)
-  }, 2000)
+  }
 
   return action => {
     if (actionTypes.includes(action.type)) socket.emit('action', action)

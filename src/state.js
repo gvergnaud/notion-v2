@@ -1,8 +1,8 @@
-import { between, setAtIndex, insertAtIndex } from './utils'
+import { setAtIndex, insertAtIndex, uniqId } from './utils'
 
 export const initialState = {
-  lines: [{ type: 'h1', content: '' }],
-  focusIndex: 0,
+  lines: [{ type: 'h1', content: '', id: 'init' }],
+  focusId: 0,
   menu: {
     search: '',
     isOpen: false,
@@ -48,17 +48,27 @@ export const menuItems = [
   },
 ]
 
-export const maxIndex = state => state.lines.length - 1
-export const hasContentInFocus = state =>
-  !!state.lines[state.focusIndex].content
-export const filteredMenuItems = state =>
-  menuItems.filter(item =>
-    item.name.toUpperCase().startsWith(state.menu.search.toUpperCase()),
-  )
-
-export const getSelectedTextType = state => {
-  const item = filteredMenuItems(state)[state.menu.selectedIndex]
-  return item ? item.type : null
+export const selectors = {
+  maxIndex: state => state.lines.length - 1,
+  getLine: (id, state) => state.lines.find(line => line.id === id),
+  getIdIndex: (id, state) => state.lines.indexOf(selectors.getLine(id, state)),
+  getPreviousId: (id, state) => {
+    const previousLine = state.lines[selectors.getIdIndex(id, state) - 1]
+    return previousLine ? previousLine.id : id
+  },
+  getNextId: (id, state) => {
+    const nextLine = state.lines[selectors.getIdIndex(id, state) + 1]
+    return nextLine ? nextLine.id : id
+  },
+  hasContentInFocus: state => !!selectors.getLine(state.focusId, state).content,
+  filteredMenuItems: state =>
+    menuItems.filter(item =>
+      item.name.toUpperCase().startsWith(state.menu.search.toUpperCase()),
+    ),
+  getSelectedTextType: state => {
+    const item = selectors.filteredMenuItems(state)[state.menu.selectedIndex]
+    return item ? item.type : null
+  },
 }
 
 export const reducer = (state, action) => {
@@ -67,46 +77,43 @@ export const reducer = (state, action) => {
       return {
         ...state,
         lines: action.lines,
+        focusId: action.lines[0].id,
       }
 
     case types.FOCUS_UP:
       return {
         ...state,
-        focusIndex: between(0, maxIndex(state), state.focusIndex - 1),
+        focusId: selectors.getPreviousId(state.focusId, state),
       }
 
     case types.FOCUS_DOWN:
       return {
         ...state,
-        focusIndex: between(0, maxIndex(state), state.focusIndex + 1),
+        focusId: selectors.getNextId(state.focusId, state),
       }
 
     case types.FOCUS:
       return {
         ...state,
-        focusIndex: action.index,
+        focusId: action.id,
       }
 
     case types.NEW_LINE:
       return {
         ...state,
         lines: insertAtIndex(
-          action.index,
-          { type: 'p', content: '' },
+          selectors.getIdIndex(action.afterId, state) + 1,
+          { type: 'p', content: '', id: action.newId },
           state.lines,
         ),
-        focusIndex: action.isMe
-          ? state.focusIndex + 1
-          : action.index > state.focusIndex
-          ? state.focusIndex
-          : state.focusIndex + 1,
+        focusId: action.isMe ? action.newId : state.focusId,
       }
 
     case types.UPDATE_CONTENT:
       return {
         ...state,
         lines: setAtIndex(
-          action.index,
+          selectors.getIdIndex(action.id, state),
           line => ({ ...line, content: action.content }),
           state.lines,
         ),
@@ -116,23 +123,20 @@ export const reducer = (state, action) => {
       return {
         ...state,
         lines:
-          maxIndex(state) > 0
-            ? state.lines.filter((_, index) => index !== action.index)
+          selectors.maxIndex(state) > 0
+            ? state.lines.filter(line => action.id !== line.id)
             : state.lines,
-        focusIndex: between(
-          0,
-          maxIndex(state),
-          action.index > state.focusIndex
-            ? state.focusIndex
-            : state.focusIndex - 1,
-        ),
+        focusId:
+          state.focusId === action.id
+            ? selectors.getPreviousId(action.id, state)
+            : state.focusId,
       }
 
     case types.SET_TEXT_TYPE:
       return {
         ...state,
         lines: setAtIndex(
-          action.index,
+          selectors.getIdIndex(action.id, state),
           line => ({
             ...line,
             type: action.textType,
@@ -168,7 +172,8 @@ export const reducer = (state, action) => {
         menu: {
           ...state.menu,
           selectedIndex:
-            (state.menu.selectedIndex - 1) % filteredMenuItems(state).length,
+            (state.menu.selectedIndex - 1) %
+            selectors.filteredMenuItems(state).length,
         },
       }
 
@@ -178,11 +183,34 @@ export const reducer = (state, action) => {
         menu: {
           ...state.menu,
           selectedIndex:
-            (state.menu.selectedIndex + 1) % filteredMenuItems(state).length,
+            (state.menu.selectedIndex + 1) %
+            selectors.filteredMenuItems(state).length,
         },
       }
 
     default:
       return state
   }
+}
+
+export const actions = {
+  menuSelectUp: () => ({ type: types.MENU_SELECT_UP }),
+  menuSelectDown: () => ({ type: types.MENU_SELECT_DOWN }),
+  menuClose: () => ({ type: types.MENU_CLOSE }),
+  menuSetSearch: search => ({ type: types.MENU_SET_SEARCH, search }),
+  focus: id => ({ type: types.FOCUS, id }),
+  focusUp: () => ({ type: types.FOCUS_UP }),
+  focusDown: () => ({ type: types.FOCUS_DOWN }),
+  setTextType: (id, textType) => ({
+    type: types.SET_TEXT_TYPE,
+    textType,
+    id,
+  }),
+  newLine: afterId => ({ type: types.NEW_LINE, afterId, newId: uniqId() }),
+  removeLine: id => ({ type: types.REMOVE_LINE, id }),
+  updateContent: (id, content) => ({
+    type: types.UPDATE_CONTENT,
+    id,
+    content,
+  }),
 }

@@ -7,7 +7,7 @@ const server = http.createServer((req, res) => {
 
 const io = Io(server)
 
-let lines = [{ type: 'h1', content: '' }]
+let lines = [{ type: 'h1', content: '', id: 'init' }]
 
 io.on('connection', socket => {
   socket.emit('action', { type: 'INIT_STATE', lines })

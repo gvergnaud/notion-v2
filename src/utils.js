@@ -11,3 +11,9 @@ export const insertAtIndex = (index, value, xs) => [
 ]
 
 export const between = (min, max, x) => Math.max(min, Math.min(max, x))
+
+export const uniqId = () =>
+  '_' +
+  Math.random()
+    .toString(36)
+    .substr(2, 9)

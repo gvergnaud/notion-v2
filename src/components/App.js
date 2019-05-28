@@ -1,14 +1,7 @@
 import React from 'react'
 import ContentEditable from './ContentEditable'
 import Menu from './Menu'
-import {
-  reducer,
-  initialState,
-  types,
-  getSelectedTextType,
-  hasContentInFocus,
-  filteredMenuItems,
-} from '../state'
+import { reducer, initialState, types, selectors, actions } from '../state'
 import { useReducerWithMiddleware } from '../hooks'
 import { logger, socket } from '../middlewares'
 
@@ -36,7 +29,7 @@ function App() {
     ]),
   ])
   const stateRef = React.useRef(state)
-  const lineElRefs = React.useRef({})
+  const elsByIdRef = React.useRef({})
 
   React.useEffect(() => {
     stateRef.current = state
@@ -48,38 +41,33 @@ function App() {
     switch (e.keyCode) {
       case KEYUP:
         if (!e.shiftKey) {
-          if (state.menu.isOpen) dispatch({ type: types.MENU_SELECT_UP })
-          else dispatch({ type: types.FOCUS_UP })
+          if (state.menu.isOpen) dispatch(actions.menuSelectUp())
+          else dispatch(actions.focusUp())
         }
         break
 
       case KEYDOWN:
         if (!e.shiftKey) {
-          if (state.menu.isOpen) dispatch({ type: types.MENU_SELECT_DOWN })
-          else dispatch({ type: types.FOCUS_DOWN })
+          if (state.menu.isOpen) dispatch(actions.menuSelectDown())
+          else dispatch(actions.focusDown())
         }
         break
 
       case ENTER:
         e.preventDefault()
         if (state.menu.isOpen) {
-          const textType = getSelectedTextType(state)
-          if (textType)
-            dispatch({
-              type: types.SET_TEXT_TYPE,
-              textType,
-              index: state.focusIndex,
-            })
-          dispatch({ type: types.MENU_CLOSE })
+          const textType = selectors.getSelectedTextType(state)
+          if (textType) dispatch(actions.setTextType(state.focusId, textType))
+          dispatch(actions.menuClose())
         } else {
-          dispatch({ type: types.NEW_LINE, index: state.focusIndex + 1 })
+          dispatch(actions.newLine(state.focusId))
         }
 
         break
 
       case BACKSPACE:
-        if (!hasContentInFocus(state))
-          dispatch({ type: types.REMOVE_LINE, index: state.focusIndex })
+        if (!selectors.hasContentInFocus(state))
+          dispatch(actions.removeLine(state.focusId))
         break
 
       default:
@@ -87,34 +75,34 @@ function App() {
     }
   }
 
-  const onFocus = index => dispatch({ type: types.FOCUS, index })
+  const onFocus = id => dispatch(actions.focus(id))
 
-  const onChange = (index, content) => {
-    dispatch({ type: types.UPDATE_CONTENT, index, content })
+  const onChange = (id, content) => {
+    dispatch(actions.updateContent(id, content))
     if (content.startsWith('/')) {
-      dispatch({ type: types.MENU_SET_SEARCH, search: content.slice(1) })
+      dispatch(actions.menuSetSearch(content.slice(1)))
     } else {
-      if (state.menu.isOpen) dispatch({ type: types.MENU_CLOSE })
+      if (state.menu.isOpen) dispatch(actions.menuClose())
     }
   }
 
   const setTextType = textType => {
-    dispatch({ type: types.SET_TEXT_TYPE, textType, index: state.focusIndex })
-    dispatch({ type: types.MENU_CLOSE })
+    dispatch(actions.setTextType(state.focusId, textType))
+    dispatch(actions.menuClose())
 
-    const focusedLineEl = lineElRefs.current[state.focusIndex]
-    if (focusedLineEl) focusedLineEl.focus()
+    const focusedEl = elsByIdRef.current[state.focusId]
+    if (focusedEl) focusedEl.focus()
   }
 
   const { top, left } = React.useMemo(() => {
-    const focusedLine = lineElRefs.current[state.focusIndex]
-    if (!focusedLine || !state.menu.isOpen) return {}
-    const { top, left, height } = focusedLine.getBoundingClientRect()
+    const focusedEl = elsByIdRef.current[state.focusId]
+    if (!focusedEl || !state.menu.isOpen) return {}
+    const { top, left, height } = focusedEl.getBoundingClientRect()
     return {
       top: top + height,
       left,
     }
-  }, [lineElRefs.current, state.focusIndex, state.menu.isOpen])
+  }, [elsByIdRef.current, state.focusId, state.menu.isOpen])
 
   return (
     <div className="App">
@@ -123,7 +111,7 @@ function App() {
         <Menu
           state={state.menu}
           onSelect={setTextType}
-          items={filteredMenuItems(state)}
+          items={selectors.filteredMenuItems(state)}
           style={{ top, left }}
         />
       )}
@@ -132,24 +120,23 @@ function App() {
           <p>Notion v2</p>
         </header>
         <div className="content" onClick={() => onFocus(0)}>
-          {state.lines.map(({ type, content }, index) => (
+          {state.lines.map(({ type, content, id }) => (
             <div
-              key={index}
+              key={id}
               className="line"
               onClick={e => {
                 e.stopPropagation()
-                onFocus(index)
+                onFocus(id)
               }}
             >
               <ContentEditable
-                setInputRef={el => (lineElRefs.current[index] = el)}
-                index={index}
+                setInputRef={el => (elsByIdRef.current[id] = el)}
                 placeholder={placeholderByType[type]}
                 className={type}
                 html={content}
-                onChange={e => onChange(index, e.target.value)}
-                autoFocus={index === state.focusIndex}
-                onFocus={() => onFocus(index)}
+                onChange={e => onChange(id, e.target.value)}
+                autoFocus={id === state.focusId}
+                onFocus={() => onFocus(id)}
                 onClick={e => e.stopPropagation()}
                 onKeyDown={onKeyDown}
                 style={{ minHeight: '1em' }}
