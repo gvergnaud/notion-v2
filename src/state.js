@@ -2,7 +2,8 @@ import { setAtIndex, insertAtIndex, uniqId } from './utils'
 
 export const initialState = {
   lines: [{ type: 'h1', content: '', id: 'init' }],
-  focusId: 0,
+  focusId: 'init',
+  selections: {},
   menu: {
     search: '',
     isOpen: false,
@@ -18,6 +19,7 @@ export const types = {
   NEW_LINE: 'NEW_LINE',
   REMOVE_LINE: 'REMOVE_LINE',
   UPDATE_CONTENT: 'UPDATE_CONTENT',
+  UPDATE_SELECTION: 'UPDATE_SELECTION',
   SET_TEXT_TYPE: 'SET_TEXT_TYPE',
   MENU_SET_SEARCH: 'MENU_SET_SEARCH',
   MENU_CLOSE: 'MENU_CLOSE',
@@ -152,6 +154,18 @@ export const reducer = (state, action) => {
         ),
       }
 
+    case types.UPDATE_SELECTION:
+      return {
+        ...state,
+        selections: {
+          ...state.selections,
+          [action.userId]: {
+            lineId: action.lineId,
+            selection: action.selection,
+          },
+        },
+      }
+
     case types.MENU_CLOSE:
       return {
         ...state,
@@ -218,5 +232,11 @@ export const actions = {
     type: types.UPDATE_CONTENT,
     id,
     content,
+  }),
+  updateSelection: (userId, lineId, selection) => ({
+    type: types.UPDATE_SELECTION,
+    userId,
+    lineId,
+    selection,
   }),
 }

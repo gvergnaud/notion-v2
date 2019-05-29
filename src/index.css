@@ -157,3 +157,18 @@ code {
 .menu-item:hover, .menu-item.selected {
   background-color: #e7e7e7;
 }
+
+
+.selection-overlay {
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 10;
+}
+
+.selection-overlay .selection {
+  background-color: rgba(15, 15, 70, .3);
+}

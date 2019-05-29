@@ -1,9 +1,11 @@
 import React from 'react'
 import ContentEditable from './ContentEditable'
 import Menu from './Menu'
+import SelectionOverlay from './SelectionOverlay'
 import { reducer, initialState, types, selectors, actions } from '../state'
 import { useReducerWithMiddleware } from '../hooks'
 import { logger, socket } from '../middlewares'
+import { uniqId } from '../utils'
 
 const KEYUP = 38
 const KEYDOWN = 40
@@ -18,16 +20,23 @@ const placeholderByType = {
   p: "Type '/' for commands",
 }
 
+const middlewares = [
+  socket([
+    types.NEW_LINE,
+    types.REMOVE_LINE,
+    types.UPDATE_CONTENT,
+    types.SET_TEXT_TYPE,
+    types.UPDATE_SELECTION,
+  ]),
+  logger,
+]
+
 function App() {
-  const [state, dispatch] = useReducerWithMiddleware(reducer, initialState, [
-    socket([
-      types.NEW_LINE,
-      types.REMOVE_LINE,
-      types.UPDATE_CONTENT,
-      types.SET_TEXT_TYPE,
-    ]),
-    logger,
-  ])
+  const [state, dispatch] = useReducerWithMiddleware(
+    reducer,
+    initialState,
+    middlewares,
+  )
   const stateRef = React.useRef(state)
   const elsByIdRef = React.useRef({})
 
@@ -105,6 +114,12 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elsByIdRef.current, state.focusId, state.menu.isOpen])
 
+  const userId = React.useMemo(() => uniqId(), [])
+
+  const onSelectionChange = React.useCallback((lineId, selection) => {
+    dispatch(actions.updateSelection(userId, lineId, selection))
+  }, [])
+
   return (
     <div className="App">
       <div className="sidebar" />
@@ -116,6 +131,11 @@ function App() {
           style={{ top, left }}
         />
       )}
+      <SelectionOverlay
+        selections={state.selections}
+        elsById={elsByIdRef.current}
+        currentUserId={userId}
+      />
       <div className="frame">
         <header className="header">
           <p>Notion v2</p>
@@ -135,12 +155,15 @@ function App() {
                 placeholder={placeholderByType[type]}
                 className={type}
                 html={content}
-                onChange={e => onChange(id, e.target.value)}
                 autoFocus={id === state.focusId}
+                style={{ minHeight: '1em' }}
+                onChange={e => onChange(id, e.target.value)}
                 onFocus={() => onFocus(id)}
                 onClick={e => e.stopPropagation()}
                 onKeyDown={onKeyDown}
-                style={{ minHeight: '1em' }}
+                onSelectionChange={selection =>
+                  onSelectionChange(id, selection)
+                }
               />
             </div>
           ))}
