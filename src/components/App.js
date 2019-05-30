@@ -124,6 +124,7 @@ function App() {
 
   const onSelectionChange = React.useCallback((lineId, selection) => {
     dispatch(actions.updateSelection(userId, lineId, selection))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
