@@ -7,10 +7,11 @@ import { useReducerWithMiddleware } from '../hooks'
 import { logger, socket } from '../middlewares'
 import { uniqId } from '../utils'
 
-const KEYUP = 38
-const KEYDOWN = 40
+const ARROW_UP = 38
+const ARROW_DOWN = 40
 const ENTER = 13
 const BACKSPACE = 8
+const ESCAPE = 27
 
 const placeholderByType = {
   h1: 'Untitled',
@@ -48,14 +49,14 @@ function App() {
     const state = stateRef.current
 
     switch (e.keyCode) {
-      case KEYUP:
+      case ARROW_UP:
         if (!e.shiftKey) {
           if (state.menu.isOpen) dispatch(actions.menuSelectUp())
           else dispatch(actions.focusUp())
         }
         break
 
-      case KEYDOWN:
+      case ARROW_DOWN:
         if (!e.shiftKey) {
           if (state.menu.isOpen) dispatch(actions.menuSelectDown())
           else dispatch(actions.focusDown())
@@ -71,12 +72,17 @@ function App() {
         } else {
           dispatch(actions.newLine(state.focusId))
         }
-
         break
 
       case BACKSPACE:
         if (!selectors.hasContentInFocus(state))
           dispatch(actions.removeLine(state.focusId))
+        break
+
+      case ESCAPE:
+        if (state.menu.isOpen) {
+          dispatch(actions.menuClose())
+        }
         break
 
       default:

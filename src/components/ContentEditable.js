@@ -16,14 +16,12 @@ const ContentEditable = ({
 
   React.useEffect(() => {
     setInputRef(ref.current)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ref.current, setInputRef])
 
   React.useEffect(() => {
     if (onSelectionChange && document.activeElement !== ref.current) return
     const handler = () => {
       const selection = document.getSelection()
-      console.log(selection)
       onSelectionChange({
         type: selection.type,
         start: {
