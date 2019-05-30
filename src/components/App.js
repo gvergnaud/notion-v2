@@ -141,6 +141,7 @@ function App() {
         selections={state.selections}
         elsById={elsByIdRef.current}
         currentUserId={userId}
+        lines={state.lines}
       />
       <div className="frame">
         <header className="header">

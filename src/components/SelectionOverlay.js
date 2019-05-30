@@ -1,6 +1,6 @@
 import React from 'react'
 
-const Selection = ({ el, selection }) => {
+const Selection = ({ el, selection, lines }) => {
   const [rect, setRect] = React.useState(null)
 
   React.useEffect(() => {
@@ -8,14 +8,10 @@ const Selection = ({ el, selection }) => {
 
     const range = document.createRange()
 
-    const start =
+    const [start, end] =
       selection.start.offset < selection.end.offset
-        ? selection.start
-        : selection.end
-    const end =
-      selection.start.offset < selection.end.offset
-        ? selection.end
-        : selection.start
+        ? [selection.start, selection.end]
+        : [selection.end, selection.start]
 
     const startEl = el.childNodes[start.childIndex] || el
     const endEl = el.childNodes[end.childIndex] || el
@@ -28,7 +24,7 @@ const Selection = ({ el, selection }) => {
     } catch (e) {
       console.error(e)
     }
-  }, [el, selection.end, selection.start])
+  }, [el, selection.end, selection.start, lines])
 
   return !rect ? null : (
     <div
@@ -49,13 +45,19 @@ export default function SelectionOverlay({
   selections,
   elsById,
   currentUserId,
+  lines,
 }) {
   return (
     <div className="selection-overlay">
       {Object.entries(selections)
         .filter(([userId]) => userId !== currentUserId)
         .map(([userId, { lineId, selection }]) => (
-          <Selection key={userId} el={elsById[lineId]} selection={selection} />
+          <Selection
+            key={userId}
+            el={elsById[lineId]}
+            selection={selection}
+            lines={lines}
+          />
         ))}
     </div>
   )
