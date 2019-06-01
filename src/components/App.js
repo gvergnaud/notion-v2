@@ -3,7 +3,7 @@ import ContentEditable from './ContentEditable'
 import Menu from './Menu'
 import SelectionOverlay from './SelectionOverlay'
 import { reducer, initialState, types, selectors, actions } from '../state'
-import { useReducerWithMiddleware } from '../hooks'
+import useMiddlewareReducer from 'use-middleware-reducer'
 import { logger, socket } from '../middlewares'
 import { uniqId } from '../utils'
 
@@ -33,7 +33,7 @@ const middlewares = [
 ]
 
 function App() {
-  const [state, dispatch] = useReducerWithMiddleware(
+  const [state, dispatch] = useMiddlewareReducer(
     reducer,
     initialState,
     middlewares,
