@@ -11,7 +11,7 @@ export const logger = ({ getState }) => next => action => {
 }
 
 export const socket = actionTypes => ({ getState }) => next => {
-  const socket = ioClient('http://localhost:3001')
+  const socket = ioClient('https://react-h3-backend.herokuapp.com/')
 
   socket.on('action', action => next({ ...action, isMe: false }))
 
