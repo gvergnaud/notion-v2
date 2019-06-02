@@ -1,20 +1,31 @@
 import React from 'react'
 
-const APILoginRoute = 'https://react-h3-backend.herokuapp.com/auth/login'
-// const APILoginRoute = 'http://localhost:8000/auth/login'
+// const APILoginRoute = 'https://react-h3-backend.herokuapp.com/auth/login'
+const APIBaseUrl = 'http://localhost:8000'
+const APIPaths = {
+  login: '/auth/login',
+  validateToken: '/auth/validate-token'
+}
+const LS_KEY = 'rh-auth'
 
 // Demo credentials
 // email: tom@hetic.net
 // pwd:   hetic
 
-const login = (email, password) => window.fetch(APILoginRoute, {
+const login = (email, password) => window.fetch(`${APIBaseUrl}${APIPaths.login}`, {
     method: 'POST',
-    mode: 'cors',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ email, password }),
   })
+const validateToken = (token) => window.fetch(`${APIBaseUrl}${APIPaths.validateToken}`, {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `bearer ${token}`
+  }
+})
 
 const useAPI = action => {
   const [state, setState] = React.useState({
@@ -30,7 +41,9 @@ const useAPI = action => {
       const data = await res.json()
       setState(prev => ({ ...prev, data, error: !res.ok, pending: false, completed: true }))
     } catch (e) {
-      setState(prev => ({ ...prev, data: null, error: true, pending: false, completed: true }))
+      setState(prev => ({
+        ...prev, data: { msg: e.message }, error: true, pending: false, completed: true
+      }))
     }
   }
 
@@ -42,6 +55,8 @@ const AuthForm = ({ setAuthState }) => {
   const [loginState, executeLogin] = useAPI(login)
 
   React.useEffect(() => {
+    if (loginState.data && loginState.data.token)
+      localStorage.setItem(LS_KEY, loginState.data.token)
     if (loginState.data && loginState.data.auth === true) setAuthState(true)
   }, [loginState.data, setAuthState])
 
@@ -100,7 +115,22 @@ const AuthForm = ({ setAuthState }) => {
 
 const Auth = ({ children }) => {
   const [isAuth, setIsAuth] = React.useState(false)
+  const [authValidationState, executeValidateToken] = useAPI(validateToken)
 
+  React.useEffect(() => {
+    const token = localStorage.getItem(LS_KEY)
+    if (token) {
+      executeValidateToken(token)
+    }
+  }, [])
+  React.useEffect(() => {
+    if (authValidationState.data && authValidationState.data.token)
+      localStorage.setItem(LS_KEY, authValidationState.data.token)
+    if (authValidationState.data && authValidationState.data.auth === true) setIsAuth(true)
+  }, [authValidationState.data])
+
+  if (authValidationState.pending)
+    return (<div className="auth-glob-loading"><p>Loading...</p></div>)
   return isAuth ? children : <AuthForm setAuthState={setIsAuth} />
 }
 
