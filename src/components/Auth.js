@@ -50,15 +50,15 @@ const useAPI = action => {
   return [state, execute]
 }
 
-const AuthForm = ({ setAuthState }) => {
+const AuthForm = ({ onLoginSuccess }) => {
   const [state, setState] = React.useState({ form: { email: '', password: '' } })
   const [loginState, executeLogin] = useAPI(login)
 
   React.useEffect(() => {
     if (loginState.data && loginState.data.token)
       localStorage.setItem(LS_KEY, loginState.data.token)
-    if (loginState.data && loginState.data.auth === true) setAuthState(true)
-  }, [loginState.data, setAuthState])
+    if (loginState.data && loginState.data.auth === true) onLoginSuccess()
+  }, [loginState.data, onLoginSuccess])
 
   const onChange = e => {
     const { value, name } = e.target
@@ -131,7 +131,7 @@ const Auth = ({ children }) => {
 
   if (authValidationState.pending)
     return (<div className="auth-glob-loading"><p>Loading...</p></div>)
-  return isAuth ? children : <AuthForm setAuthState={setIsAuth} />
+  return isAuth ? children : <AuthForm onLoginSuccess={() => setIsAuth(true)} />
 }
 
 export default Auth
